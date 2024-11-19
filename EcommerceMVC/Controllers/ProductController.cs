@@ -1,6 +1,7 @@
 ﻿using EcommerceMVC.Data;
 using EcommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceMVC.Controllers
 {
@@ -60,5 +61,34 @@ namespace EcommerceMVC.Controllers
 
             return View(result);
         }
+
+        public IActionResult Detail(int id)
+        {
+            var data = db.Products
+                        .Include(p => p.Category)
+                        .SingleOrDefault(p => p.ProductId == id);
+            if(data == null)
+            {
+                TempData["Message"] = $"Not found product with id: {id}";
+                return Redirect("/404");
+            }
+            var result = new DetailProductVM
+            {
+                ProductId = data.ProductId,
+                ProductName = data.ProductName,
+                Price = data.Price ?? 0,
+                Description = data.Description ?? string.Empty,
+                ProductPhoto = data.ProductPhoto ?? string.Empty,
+                ShortDescription = data.Unit,
+                CategoryName = data.Category.CategoryName,
+                Stock = 10,
+                FeedbackPoint = 5,
+
+            };
+            return View(result);        
+        }
+
+
+
     }
 }
