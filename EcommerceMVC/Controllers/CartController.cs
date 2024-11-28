@@ -12,8 +12,8 @@ namespace EcommerceMVC.Controllers
         public CartController(Hshop2023Context context) {
             db = context;
         }
-        const string CART_KEY = "MYCART";
-        public List<CartItem> Cart => HttpContext.Session.Get<List<CartItem>>(CART_KEY) ?? new List<CartItem>();
+        
+        public List<CartItem> Cart => HttpContext.Session.Get<List<CartItem>>(MySetting.CART_KEY) ?? new List<CartItem>();
         public IActionResult Index()
         {
             return View(Cart);
@@ -47,7 +47,7 @@ namespace EcommerceMVC.Controllers
             else { 
                 item.quantity += quantity;
             }
-            HttpContext.Session.Set(CART_KEY, cart);
+            HttpContext.Session.Set(MySetting.CART_KEY, cart);
 
 
             return RedirectToAction("index");
@@ -59,7 +59,7 @@ namespace EcommerceMVC.Controllers
             var item = cart.SingleOrDefault(p => p.ProductId==id);
             if (item != null) { 
                 cart.Remove(item);
-                HttpContext.Session.Set(CART_KEY, cart);
+                HttpContext.Session.Set(MySetting.CART_KEY, cart);
             }
 
             return RedirectToAction("index");
