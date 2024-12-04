@@ -2,7 +2,11 @@
 using EcommerceMVC.Data;
 using EcommerceMVC.Helpers;
 using EcommerceMVC.ViewModels;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EcommerceMVC.Controllers
 {
@@ -59,10 +63,99 @@ namespace EcommerceMVC.Controllers
 		}
 
 		[HttpGet]
-		public IActionResult Login()
+		public IActionResult Login(string? returnUrl)
 		{
-
+			ViewBag.ReturnUrl = returnUrl;
 			return View(); 
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> Login(LoginVM model, string? returnUrl) 
+		{
+			ViewBag.ReturnUrl = returnUrl;
+			if (ModelState.IsValid)
+			{
+				var customner = db.Customers.SingleOrDefault(cus => cus.CustomerId == model.UserName);
+				if (customner == null)
+				{
+					ModelState.AddModelError("Error", "This customer was not found");
+				}
+				else {
+					if (!customner.IsActive)
+					{
+						ModelState.AddModelError("Error", "This account has been locked. Please contact admin");
+					}
+					else
+					{
+						if(customner.Password != model.Password.ToMd5Hash(customner.RandomKey))
+						{
+							ModelState.AddModelError("Error", "Wrong password");
+						}
+                        else
+                        {
+							//var claims = new List<Claim> {
+							//	new Claim(ClaimTypes.Email, customner.Email),	
+							//	new Claim(ClaimTypes.Name, customner.FullName),	
+							//	new Claim("CustomerId", customner.CustomerId),	
+
+							//	// claim - role động
+							//	new Claim(ClaimTypes.Role, "Customer")
+							//};
+
+							//var claimsIndentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+							//var claimsPricipal = new ClaimsPrincipal(claimsIndentity);
+
+							//await HttpContext.SignInAsync(claimsPricipal);
+							//if (Url.IsLocalUrl(returnUrl))
+							//{
+							//	return Redirect(returnUrl);
+							//}
+							//else
+							//{
+							//	return Redirect("/");
+							//}
+
+							var claims = new List<Claim> {
+								new Claim(ClaimTypes.Email, customner.Email),
+								new Claim(ClaimTypes.Name, customner.FullName),
+								new Claim("CustomerID", customner.CustomerId),
+
+								//claim - role động
+								new Claim(ClaimTypes.Role, "Customer")
+							};
+
+							var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+							var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+							await HttpContext.SignInAsync(claimsPrincipal);
+
+							if (Url.IsLocalUrl(returnUrl))
+							{
+								return Redirect(returnUrl);
+							}
+							else
+							{
+								return Redirect("/");
+							}
+						}
+                    }
+				}
+			}
+			return View();
+		}
+
+
+		[Authorize]
+		public IActionResult Profile()
+		{
+			return View(); 
+		}
+
+		[Authorize]
+		public async Task<IActionResult> Logout()
+		{
+			await HttpContext.SignOutAsync();
+			return Redirect("/");
 		}
 	}
 }
