@@ -118,7 +118,7 @@ namespace EcommerceMVC.Controllers
 							var claims = new List<Claim> {
 								new Claim(ClaimTypes.Email, customner.Email),
 								new Claim(ClaimTypes.Name, customner.FullName),
-								new Claim("CustomerID", customner.CustomerId),
+								new Claim(MySetting.CLAIM_CUSTOMERID, customner.CustomerId),
 
 								//claim - role động
 								new Claim(ClaimTypes.Role, "Customer")
